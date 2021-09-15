@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Boredom solver</title>
+<meta name="description" content="A simple webpage that uses the bored API to suggest activities based on certain demands">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+    html, body {
+        height: 100vh;
+        width: 100%;
+        margin: 0px;
+        padding: 0px;
+        background-color: dimgray;
+    }
+
+    body {
+        display: grid;
+        grid-template-columns: 1fr;
+        grid-template-rows: min-content 1fr max-content;
+        justify-content: center;
+        text-align: center;
+    }
+
+    header, h1 {
+        text-align: center;
+        margin: o;
+    }
+
+
+    footer p {
+        width: 80%;
+        margin: 20px auto;
+        text-align: left;
+        display: inline-block;
+    }
+
+    section {
+        background-color: rgb(22, 22, 22);
+        padding: 30px;
+    }
+
+    .container {
+        display: flex; 
+        justify-content: center; 
+        width: 100%;
+    }
+
+    form {
+        display: flex; 
+        flex-wrap: wrap;
+        justify-content: space-evenly; 
+        width: 80%;
+    }
+
+    #result {
+        border: whitesmoke 2px solid;
+        border-radius: 5px;
+        margin: 20px;
+        padding: 5px;
+        color: whitesmoke;
+        width: 80%;
+        text-align: left;
+        padding: 20px;
+    }
+
+    select {
+        padding: 5px;
+        width: 30%;
+        text-align: center;
+    }
+
+    input {
+        padding: 5px;
+        width: 15%;
+        background-color: dimgray;
+        border: 0;
+        border-radius: 5px;
+    }
+
+    input:hover {
+        background-color: rgb(45, 71, 45);
+    }
+
+</style>
+</head>
+
+<body>
+<header>
+    <h1>Boredom solver</h1>
+</header>
+<section>
+    <div class="container">
+        <form onsubmit="getResult(); return false;">
+            <select id="activityTypes">
+                <option disabled>No activity type filter</option>
+                <option value="education">Educational</option>
+                <option value="recreational">Recreational</option>
+                <option value="social">Social</option>
+                <option value="diy">DIY</option>
+                <option value="charity">Charity</option>
+                <option value="cooking">Cooking</option>
+                <option value="relaxation">Relaxation</option>
+                <option value="music">Musical</option>
+                <option value="busywork">Busywork</option>
+            </select>
+            
+            <select id="maxParticipants">
+                <option disabled>No max participants set</option>
+                <option value="1">Solo</option>
+                <option value="2">Two</option>
+                <option value="3">Three</option>
+                <option value="4">Four</option>
+                <option value="5">Five</option>
+                <option value="8">Eight</option>
+            </select>
+
+            <input type="submit" value="Generate an activity">
+        </form>
+    </div>
+    <div class="container">
+        <div id="result">
+            <p>No activity has been requested yet. You can press the "Generate an activity" button to get a fully randomized activity, you can additionally filter on activity type and/or maximum participants</p>
+        </div>
+    </div>
+</section>
+<footer><p>Project by Calhoun Van Paesschen, using <a href="https://www.boredapi.com/about">Bored API by drewthoennes</a></p></footer>
+</body>
+
+<script type="text/javascript">
+    /* Boredapi does not support the pulling of an array of all options of the values 
+     so the selects had to be hardcoded */
+    const apiBaseString = "https://www.boredapi.com/api/activity"
+    let typeSelect;
+    let maxParticipantsSelect;
+    let resultDivElement;
+
+    window.onload = () => {
+        // when page loaded get the elements
+        typeSelect = document.getElementById("activityTypes");
+        maxParticipantsSelect = document.getElementById("maxParticipants");
+        resultDivElement = document.getElementById("result");
+    }
+
+    
+
+    function getResult() {
+        // get the correct request string
+        let apiString = new String(apiBaseString) + setFetchParams();
+        
+        // fetch the data and process it
+        fetchActivity(apiString);
+    }
+
+    function setFetchParams() {
+        let paramString = "";
+
+        // pull the values upon start of parameter determination that way they are always right
+        let typeFilter = typeSelect.value;
+        let participantsFilter = maxParticipantsSelect.value;
+
+        if(typeFilter != null && typeFilter != "") {
+            paramString += "?type=" + typeFilter;
+        }
+
+        if(participantsFilter != null && participantsFilter != "") {
+            if(paramString != "") {
+                paramString += "&";
+            } else {
+                paramString += "?";
+            }
+            paramString += "participants="+participantsFilter;
+        }
+
+        return paramString;
+    }
+
+    function fetchActivity(apiString) {
+        fetch(apiString)
+            .then((res) => res.json())
+            .then((res) => {
+                const activity = res;
+                
+                //empty standard text from result div
+                resultDivElement.innerHTML = ""
+                if(activity.hasOwnProperty("error")) {
+                    let content = document.createElement("p");
+                    content.innerText = "Seems like we don't have any activities with your current parameters, please change your filters and try again";
+                    resultDivElement.appendChild(content);
+                } else {
+                    setContent(activity);
+                }
+        });
+    }
+
+    function setContent(activity) {
+        // activity text
+        let activityElement = document.createElement("p");
+        activityElement.innerText = activity.activity;
+        activityElement.setAttribute("style", "width:100%");
+        resultDivElement.appendChild(activityElement);
+        
+        // type text
+        let typeElement =  document.createElement("p");
+        typeElement.innerText = "Activity type: " + activity.type;
+        resultDivElement.appendChild(typeElement);
+
+        // participants text
+        let participantsElement = document.createElement("p");
+        participantsElement.innerText = "Advised number of Participants: " + activity.participants;
+        resultDivElement.appendChild(participantsElement);
+    }
+</script>
+
+</html>
